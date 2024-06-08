@@ -1,9 +1,6 @@
-import React, { useState } from "react";
 import ListItem from "./ListItem";
 
-const MovieList = ({ moviesData }) => {
-	const [movies, setMovies] = useState(moviesData);
-
+const MovieList = ({ movies }) => {
 	return (
 		<ul className="list">
 			{movies?.map((movie) => (
