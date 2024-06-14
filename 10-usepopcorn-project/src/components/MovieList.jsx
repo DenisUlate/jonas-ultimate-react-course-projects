@@ -1,10 +1,14 @@
-import ListItem from "./ListItem";
+import MovieItem from "./MovieItem";
 
-const MovieList = ({ movies }) => {
+const MovieList = ({ movies, onSelectMovie }) => {
 	return (
-		<ul className="list">
+		<ul className="list list-movies">
 			{movies?.map((movie) => (
-				<ListItem key={movie.imdbID} movie={movie} />
+				<MovieItem
+					key={movie.imdbID}
+					movie={movie}
+					onSelectMovie={onSelectMovie}
+				/>
 			))}
 		</ul>
 	);

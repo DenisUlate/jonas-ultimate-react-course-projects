@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import Navbar from "./components/Navbar";
 import ListBox from "./components/ListBox";
@@ -7,6 +7,9 @@ import Search from "./components/Search";
 import NumResults from "./components/NumResults";
 import WatchedSummary from "./components/WatchedSummary";
 import WatchedMovieList from "./components/WatchedMovieList";
+import ErrorMessage from "./components/ErrorMessage";
+import MovieDetails from "./components/MovieDetails";
+import Loader from "./components/Loader";
 
 const tempMovieData = [
 	{
@@ -55,23 +58,125 @@ const tempWatchedData = [
 	},
 ];
 
+const KEY = "1207a162";
+
 export default function App() {
 	const [movies, setMovies] = useState(tempMovieData);
 	const [watched, setWatched] = useState(tempWatchedData);
+	const [query, setQuery] = useState("inception");
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [selectedId, setSelectedId] = useState(null);
+
+	function handleSelectedMovie(id) {
+		setSelectedId((selectedId) => (selectedId === id ? null : id));
+	}
+
+	function handleCloseMovieDetails() {
+		setSelectedId(null);
+	}
+
+	function handleAddWatchedMovie(movie) {
+		setWatched((watched) => {
+			// Check if the movie already exists in the watched list
+			const movieExists = watched.some(
+				(watchedMovie) => watchedMovie.imdbID === movie.imdbID
+			);
+
+			// If the movie doesn't exist, add it to the list
+			if (!movieExists) {
+				return [...watched, movie];
+			}
+
+			return watched;
+		});
+	}
+
+	function handleRemoveWatchedMovie(id) {
+		setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
+	}
+
+	useEffect(
+		function () {
+			const abortController = new AbortController();
+			async function fetchMovies() {
+				if (!query.length) {
+					setMovies([]);
+					setError("");
+					return;
+				}
+
+				try {
+					setIsLoading(true);
+					setError("");
+					const res = await fetch(
+						`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+						{ signal: abortController.signal }
+					);
+
+					if (!res.ok) {
+						throw new Error("Something went wrong with fetching movies.");
+					}
+
+					const data = await res.json();
+					if (data.Response === "False") {
+						throw new Error("No movies found.");
+					}
+
+					setMovies(data.Search);
+					setError("");
+				} catch (error) {
+					console.error(error.message);
+					if (error.name !== "AbortError") {
+						setError(error.message);
+					}
+				} finally {
+					setIsLoading(false);
+				}
+			}
+
+			handleCloseMovieDetails();
+			fetchMovies();
+
+			return () => {
+				abortController.abort();
+			};
+		},
+		[query]
+	);
 
 	return (
 		<>
 			<Navbar>
-				<Search />
+				<Search query={query} setQuery={setQuery} />
 				<NumResults movies={movies} />
 			</Navbar>
 			<Main>
 				<ListBox>
-					<MovieList movies={movies} />
+					{/* {isLoading ? <Loader /> : <MovieList movies={movies} />} */}
+					{isLoading && <Loader />}
+					{!isLoading && !error && (
+						<MovieList movies={movies} onSelectMovie={handleSelectedMovie} />
+					)}
+					{error && <ErrorMessage message={error} />}
 				</ListBox>
 				<ListBox>
-					<WatchedSummary watched={watched} />
-					<WatchedMovieList watched={watched} />
+					{selectedId ? (
+						<MovieDetails
+							selectedId={selectedId}
+							onMovieClose={handleCloseMovieDetails}
+							onAddWatchedMovie={handleAddWatchedMovie}
+							watched={watched}
+						/>
+					) : (
+						<>
+							<WatchedSummary watched={watched} />
+							<WatchedMovieList
+								watched={watched}
+								onRemoveWatchedMovie={handleRemoveWatchedMovie}
+							/>
+						</>
+					)}
 				</ListBox>
 			</Main>
 		</>
