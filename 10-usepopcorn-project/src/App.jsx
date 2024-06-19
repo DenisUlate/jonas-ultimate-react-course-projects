@@ -60,6 +60,10 @@ const tempWatchedData = [
 
 const KEY = "1207a162";
 
+/**
+ * The main component of the application.
+ * @returns {JSX.Element} The rendered App component.
+ */
 export default function App() {
 	const [movies, setMovies] = useState(tempMovieData);
 	const [watched, setWatched] = useState(tempWatchedData);
@@ -68,14 +72,25 @@ export default function App() {
 	const [error, setError] = useState("");
 	const [selectedId, setSelectedId] = useState(null);
 
+	/**
+	 * Handles the selection of a movie.
+	 * @param {string} id - The ID of the selected movie.
+	 */
 	function handleSelectedMovie(id) {
 		setSelectedId((selectedId) => (selectedId === id ? null : id));
 	}
 
+	/**
+	 * Closes the movie details.
+	 */
 	function handleCloseMovieDetails() {
 		setSelectedId(null);
 	}
 
+	/**
+	 * Adds a movie to the watched list.
+	 * @param {object} movie - The movie object to be added.
+	 */
 	function handleAddWatchedMovie(movie) {
 		setWatched((watched) => {
 			// Check if the movie already exists in the watched list
@@ -92,6 +107,10 @@ export default function App() {
 		});
 	}
 
+	/**
+	 * Removes a movie from the watched list.
+	 * @param {string} id - The ID of the movie to be removed.
+	 */
 	function handleRemoveWatchedMovie(id) {
 		setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
 	}
